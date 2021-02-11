@@ -3,7 +3,7 @@
 #include <fmt/format.h>
 #include <fstream>
 
-int main(int argc, char **argv) {
+int main(int, char **) {
   std::ifstream istream(
       "/home/mersoj/code/boundary-conditions/test/syntax-test.yaml");
   auto model_traits = bc::ReadFromStream<bc::YAML_CPP>(istream);

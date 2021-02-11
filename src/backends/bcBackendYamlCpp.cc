@@ -1,35 +1,8 @@
 #include "bcBackendYamlCpp.h"
+#include "bcBackendYamlCppConvert.h"
 #include "bcTypes.h"
 #include <fmt/ostream.h>
 #include <yaml-cpp/yaml.h>
-
-// conversions from yaml to/from the BC datatypes
-namespace YAML {
-template <> struct convert<bc::BoolBC> {
-  static Node encode(const bc::BoolBC &rhs) {
-    return convert<bool>::encode(rhs);
-  }
-  static bool decode(const Node &node, bc::BoolBC &rhs) {
-    return convert<bool>::decode(node, rhs);
-  }
-};
-template <> struct convert<bc::ScalarBC> {
-  static Node encode(const bc::ScalarBC &rhs) {
-    return convert<double>::encode(rhs);
-  }
-  static bool decode(const Node &node, bc::ScalarBC &rhs) {
-    return convert<double>::decode(node, rhs);
-  }
-};
-template <> struct convert<bc::StringBC> {
-  static Node encode(const bc::StringBC &rhs) {
-    return convert<std::string>::encode(rhs);
-  }
-  static bool decode(const Node &node, bc::StringBC &rhs) {
-    return convert<std::string>::decode(node, rhs);
-  }
-};
-} // namespace YAML
 
 namespace bc {
 
@@ -43,16 +16,16 @@ void ParseBoundaryConditions(const YAML::Node &yaml_node,
                                      std::end(geometry_vec));
     if (type == "scalar") {
       auto value = bc["value"].as<ScalarBC>();
-      parent_node->AddBoundaryCondition<int, ScalarBC>(
-          std::move(name), std::move(geometry), std::move(value));
+      parent_node->AddBoundaryCondition(std::move(name), std::move(geometry),
+                                        std::move(value));
     } else if (type == "bool") {
       auto value = bc["value"].as<BoolBC>();
-      parent_node->AddBoundaryCondition<int, BoolBC>(
-          std::move(name), std::move(geometry), std::move(value));
+      parent_node->AddBoundaryCondition(std::move(name), std::move(geometry),
+                                        std::move(value));
     } else if (type == "string") {
       auto value = bc["value"].as<StringBC>();
-      parent_node->AddBoundaryCondition<int, StringBC>(
-          std::move(name), std::move(geometry), std::move(value));
+      parent_node->AddBoundaryCondition(std::move(name), std::move(geometry),
+                                        std::move(value));
     } else if (type == "vector") {
       // auto value = bc["value"].as<VectorBC>();
       fmt::print("matrix not converting yet skipping\n");
@@ -94,12 +67,9 @@ std::unique_ptr<ModelTraits> LoadFromYamlNode(const YAML::Node &base_node) {
   for (auto &cs : base_node["cases"]) {
     ParseCase(cs, model_traits.get());
   }
-  return std::move(model_traits);
+  return model_traits;
 }
 
-template <>
-void WriteToStream<YAML_CPP>(const ModelTraits *model_traits,
-                             std::ostream &stream) {}
 template <>
 std::unique_ptr<ModelTraits> ReadFromStream<YAML_CPP>(std::istream &stream) {
   auto node = YAML::Load(stream);

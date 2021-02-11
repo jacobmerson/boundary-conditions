@@ -9,6 +9,12 @@
 namespace bc {
 
 /*
+ * This is here so that we can use the template, template parameters
+ * with the defaults for vector and unordered map. This workaround
+ * is not needed in c++17 and up.
+ */
+template <typename T> using BC_VEC_WORKAROUND = std::vector<T>;
+/*
  * The node set collection is templated because depending on the number of nodes
  * within each level, performance may be significantly better by using a vector,
  * or some other container like unordered_set. A generic implimentation is
@@ -17,16 +23,12 @@ namespace bc {
  * algorithms, it's reccomended that you specialize the add, find, and remove
  * functions
  */
-template <typename Container = std::vector<std::unique_ptr<INode>>,
-          typename std::enable_if_t<
-              std::is_convertible<typename Container::value_type,
-                                  std::unique_ptr<INode>>::value,
-              int> = 0>
-class NodeSet {
+template <template <typename> class Cont = BC_VEC_WORKAROUND> class NodeSet {
 public:
   /*
    * Add a new node to the set.
    */
+  using Container = Cont<std::unique_ptr<INode>>;
   // the default implementation works for containers with push_back
   INode *AddNode(std::unique_ptr<INode> node) {
     if (!FindNode(node->GetName())) {
@@ -51,7 +53,7 @@ public:
     // grab the pointer that we will erase from the container
     auto ptr = std::move(*it);
     nodes_.erase(it);
-    return std::move(ptr);
+    return ptr;
   };
   /*
    * Get a non-owning pointer to the node with the given name

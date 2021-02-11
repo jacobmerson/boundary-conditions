@@ -1,8 +1,10 @@
 #ifndef BC_CATEGORY_NODE_H__
 #define BC_CATEGORY_NODE_H__
 #include "bcBCNode.h"
+#include "bcConvert.h"
 #include "bcINode.h"
 #include "bcNodeSet.h"
+#include "bcTypes.h"
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -10,12 +12,12 @@
 
 namespace bc {
 
-class CategoryNode : public INode {
+class CategoryNode : public INode, public ConvertFunctions<CategoryNode> {
 public:
   template <typename String,
             typename std::enable_if_t<
                 std::is_convertible<String, std::string>::value, int> = 0>
-  CategoryNode(String &&name) : INode(std::forward<String>(name)){};
+  CategoryNode(String &&name) : INode(std::forward<String>(name)) {}
   template <typename String,
             typename std::enable_if_t<
                 std::is_convertible<String, std::string>::value, int> = 0>
@@ -23,7 +25,8 @@ public:
     return static_cast<CategoryNode *>(nodes_.AddNode(
         std::make_unique<CategoryNode>(std::forward<String>(name))));
   }
-  template <typename GID, typename BC, typename GSet, typename String,
+  template <typename BC, typename GID = OrdinalType, typename GSet,
+            typename String,
             typename std::enable_if_t<
                 std::is_convertible<String, std::string>::value, int> = 0>
   BCNode<GID, BC> *AddBoundaryCondition(String &&name, GSet &&geometry,
@@ -33,6 +36,8 @@ public:
             std::forward<String>(name), std::forward<GSet>(geometry),
             std::forward<BC>(boundary_condition))));
   }
+
+  virtual void accept(NodeVisitor &v) final { v.visit(*this); }
 
   friend fmt::formatter<CategoryNode>;
 
@@ -51,7 +56,6 @@ template <> struct fmt::formatter<bc::CategoryNode> {
     auto out = format_to(ctx.out(), "{:>{}}{}", "-", level * spaces, cn.name_);
     for (auto &nd : cn.nodes_) {
       auto CN_ptr = dynamic_cast<bc::CategoryNode *>(nd.get());
-      // auto BCN_ptr = dynamic_cast<bc::BCNode*>(nd.get());
       auto fmt_string = fmt::format("\n{{:{}.{}t}}", level + 1, spaces);
       if (CN_ptr) {
         out = format_to(out, fmt_string, *CN_ptr);

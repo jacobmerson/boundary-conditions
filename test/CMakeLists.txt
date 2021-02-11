@@ -10,3 +10,7 @@ target_link_libraries(generic_test modelTraits)
 
 add_executable(read_yaml test_reader.cc)
 target_link_libraries(read_yaml modelTraits bcBackendYamlCpp)
+
+find_package(fmt REQUIRED)
+add_executable(exprtk_test exprtk_test.cc)
+target_link_libraries(exprtk_test exprtk fmt::fmt)

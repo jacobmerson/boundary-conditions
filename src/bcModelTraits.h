@@ -12,7 +12,7 @@ public:
   template <typename String,
             std::enable_if_t<std::is_convertible<String, std::string>::value,
                              int> = 0>
-  ModelTraits(String &&name) : name_(std::forward<String>(name)){};
+  ModelTraits(String &&name) : name_(std::forward<String>(name)) {}
   /**
    * Adds a case if it doesn't exist and returns a pointer
    * to it's INode. If the case does exist, the pointer to

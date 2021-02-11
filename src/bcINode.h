@@ -1,5 +1,6 @@
 #ifndef BC_INTERFACE_NODE_H__
 #define BC_INTERFACE_NODE_H__
+#include "bcNodeVisitor.h"
 #include "fmt/format.h"
 #include <cstdlib>
 #include <iostream>
@@ -7,14 +8,25 @@
 #include <type_traits>
 
 namespace bc {
+
 class INode {
 public:
   template <typename String,
             std::enable_if_t<std::is_convertible<String, std::string>::value,
                              int> = 0>
-  INode(String &&name) : name_(std::forward<String>(name)){};
+  INode(String &&name) : name_(std::forward<String>(name)) {}
   virtual bool IsBoundaryCondition() const noexcept { return false; }
   const std::string &GetName() const noexcept { return name_; }
+  // copying is disabled because this is a base class and should
+  // be passed around with pointer semantics, not by value
+  INode(const INode &) = delete;
+  INode &operator=(const INode &) = delete;
+  // default all the operations since we need a virtual destructor
+  INode(INode &&) noexcept = default;
+  INode &operator=(INode &&) = default;
+  virtual ~INode() = default;
+
+  virtual void accept(NodeVisitor &v) = 0;
 
 protected:
   std::string name_;
